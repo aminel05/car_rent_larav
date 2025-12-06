@@ -2,6 +2,87 @@
 
 @section('title', 'Manage Rentals')
 
+@push('styles')
+<style>
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible !important;
+        /* Custom scrollbar styling */
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+    
+    /* Webkit browsers (Chrome, Safari, Edge) */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        transition: background-color 0.2s;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+    
+    .table tbody td {
+        position: relative;
+        overflow: visible;
+    }
+    
+    .table tbody td .dropdown {
+        position: static;
+    }
+    
+    .table tbody td .dropdown-menu {
+        position: fixed !important;
+        z-index: 1050;
+        margin-top: 0.125rem;
+    }
+    
+    /* Responsive dates column */
+    .table .dates-cell {
+        min-width: 140px;
+        white-space: nowrap;
+    }
+    
+    @media (max-width: 991px) {
+        .table .dates-cell {
+            min-width: 120px;
+        }
+        
+        .table .dates-cell .date-range {
+            display: block;
+            line-height: 1.3;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .table .dates-cell {
+            min-width: 100px;
+            white-space: normal;
+        }
+        
+        .table .dates-cell small {
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        
+        /* Even thinner scrollbar on mobile */
+        .table-responsive::-webkit-scrollbar {
+            height: 4px;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -81,22 +162,27 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <small>
-                                        {{ $rental->start_date->format('M d') }} - {{ $rental->end_date->format('M d, Y') }}<br>
-                                        <span class="text-muted">{{ $rental->duration }} days</span>
-                                    </small>
+                                <td class="dates-cell">
+                                    <div class="d-flex flex-column">
+                                        <small>
+                                            <span class="date-range">
+                                                <span class="d-none d-md-inline">{{ $rental->start_date->format('M d') }} - {{ $rental->end_date->format('M d, Y') }}</span>
+                                                <span class="d-inline d-md-none">{{ $rental->start_date->format('M/d') }} - {{ $rental->end_date->format('M/d') }}</span>
+                                            </span>
+                                        </small>
+                                        <small class="text-muted">{{ $rental->duration }} days</small>
+                                    </div>
                                 </td>
                                 <td class="fw-bold text-accent">${{ number_format($rental->total_price, 2) }}</td>
                                 <td>
                                     <span class="badge badge-{{ $rental->status }}">{{ ucfirst($rental->status) }}</span>
                                 </td>
-                                <td class="text-end pe-4">
+                                <td class="text-end pe-4 position-relative">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                             Update Status
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+                                        <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
                                                 <form action="{{ route('admin.rentals.status', $rental) }}" method="POST">
                                                     @csrf
@@ -168,4 +254,26 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fix dropdown positioning in table by calculating position dynamically
+        const dropdownButtons = document.querySelectorAll('.table tbody td .dropdown-toggle');
+        
+        dropdownButtons.forEach(function(button) {
+            button.addEventListener('show.bs.dropdown', function(e) {
+                const menu = this.nextElementSibling;
+                if (menu && menu.classList.contains('dropdown-menu')) {
+                    const rect = this.getBoundingClientRect();
+                    menu.style.position = 'fixed';
+                    menu.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+                    menu.style.right = (window.innerWidth - rect.right) + 'px';
+                    menu.style.left = 'auto';
+                }
+            });
+        });
+    });
+</script>
+@endpush
 
